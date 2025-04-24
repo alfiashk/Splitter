@@ -1,0 +1,149 @@
+<h1>
+    <%= group.name %> - Group Details
+</h1>
+
+<h2>Members:</h2>
+<ul>
+    <% group.members.forEach(member=> { %>
+        <li>
+            <%= member.name %>
+        </li>
+        <% }) %>
+</ul>
+
+<h2>Expenses:</h2>
+<% group.expenses.forEach(expense=> { %>
+    <div style="border: 1px solid #aaa; margin-bottom: 10px; padding: 10px;">
+        <p><strong>Title:</strong>
+            <%= expense.title %>
+        </p>
+        <p><strong>Amount:</strong> ₹<%= expense.amount %>
+        </p>
+        <p><strong>Paid By:</strong>
+            <%= expense.paidBy.name %>
+        </p>
+        <p><strong>Split Between:</strong>
+            <% expense.splitBetween.forEach(user=> { %>
+                <%= user.name %>
+                    <% if (expense.splitBetween.indexOf(user) !==expense.splitBetween.length - 1) { %>, <% } %>
+                            <% }) %>
+        </p>
+    </div>
+    <% }) %>
+
+        <hr>
+
+<h2>Add New Expense</h2>
+
+<label>Title:</label>
+<input type="text" id="expenseTitle" placeholder="e.g., Dinner bill" />
+<br /><br />
+
+<label>Description:</label>
+<textarea id="expenseDescription" placeholder="Optional description..."></textarea>
+<br /><br />
+
+<label>Total Amount (₹):</label>
+<input type="number" id="totalAmount" />
+<br /><br />
+
+<label>Split Type:</label>
+<select id="splitType">
+  <option value="equal">Equal</option>
+  <option value="custom">Custom</option>
+</select>
+
+<p>Selected Split Type: <span id="selectedSplitType">Equal</span></p>
+
+<div id="customInputs" style="display: none;">
+  <p>Enter Custom Amounts:</p>
+  <label>Aafiya: ₹<input type="number" class="customInput" data-name="Aafiya" /></label><br />
+  <label>Alfiya: ₹<input type="number" class="customInput" data-name="Alfiya" /></label><br />
+  <label>Ayesha: ₹<input type="number" class="customInput" data-name="Ayesha" /></label><br />
+</div>
+
+<br />
+<button onclick="submitExpense()">Submit Expense</button>
+
+<hr />
+
+<h3>Expense Logs:</h3>
+<div id="expenseDisplay"></div>
+
+<script>
+  const members = ["Aafiya", "Alfiya", "Ayesha"];
+  const splitTypeDropdown = document.getElementById("splitType");
+  const customInputsDiv = document.getElementById("customInputs");
+  const selectedSplitTypeDisplay = document.getElementById("selectedSplitType");
+
+  splitTypeDropdown.addEventListener("change", () => {
+    const type = splitTypeDropdown.value;
+    selectedSplitTypeDisplay.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    customInputsDiv.style.display = type === "custom" ? "block" : "none";
+  });
+
+  function submitExpense() {
+    const title = document.getElementById("expenseTitle").value.trim();
+    const description = document.getElementById("expenseDescription").value.trim();
+    const amount = parseFloat(document.getElementById("totalAmount").value);
+    const splitType = splitTypeDropdown.value;
+    const display = document.getElementById("expenseDisplay");
+
+    if (!title || !amount || amount <= 0) {
+      alert("Please enter a valid title and total amount.");
+      return;
+    }
+
+    const expenseCard = document.createElement("div");
+    expenseCard.style.border = "1px solid #ccc";
+    expenseCard.style.padding = "10px";
+    expenseCard.style.marginBottom = "15px";
+    expenseCard.style.borderRadius = "10px";
+    expenseCard.style.backgroundColor = "#f9f9f9";
+
+    let html = `<h4>💸 ${title}</h4>`;
+    if (description) html += `<p><em>${description}</em></p>`;
+    html += `<p><strong>Total:</strong> ₹${amount.toFixed(2)}</p>`;
+    html += `<p><strong>Split Type:</strong> ${splitType.charAt(0).toUpperCase() + splitType.slice(1)}</p>`;
+
+    let splitDetails = "";
+
+    if (splitType === "equal") {
+      const share = (amount / members.length).toFixed(2);
+      html += `<div style='display:flex; gap:10px; flex-wrap:wrap;'>`;
+      members.forEach(name => {
+        html += `<div style='padding:6px 12px; background:#d0f0d0; border-radius:20px;'>${name} owes ₹${share}</div>`;
+        splitDetails += `${name}: ₹${share}, `;
+      });
+      html += `</div>`;
+    } else {
+      const inputs = document.querySelectorAll(".customInput");
+      let totalCustom = 0;
+      let customShares = {};
+
+      inputs.forEach(input => {
+        const name = input.dataset.name;
+        const val = parseFloat(input.value) || 0;
+        customShares[name] = val.toFixed(2);
+        totalCustom += val;
+      });
+
+      if (totalCustom.toFixed(2) != amount.toFixed(2)) {
+        alert(`Custom total (₹${totalCustom.toFixed(2)}) doesn't match entered amount (₹${amount.toFixed(2)}). Fix it.`);
+        return;
+      }
+
+      html += `<div style='display:flex; gap:10px; flex-wrap:wrap;'>`;
+      for (let name in customShares) {
+        html += `<div style='padding:6px 12px; background:#f0d0d0; border-radius:20px;'>${name} owes ₹${customShares[name]}</div>`;
+        splitDetails += `${name}: ₹${customShares[name]}, `;
+      }
+      html += `</div>`;
+    }
+
+    html += `<p style='color:#666'><em>Log:</em> You added \"${title}\" with ₹${amount.toFixed(2)} split as follows → ${splitDetails.slice(0, -2)}</p>`;
+
+    expenseCard.innerHTML = html;
+    display.prepend(expenseCard);
+  }
+</script>

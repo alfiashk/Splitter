@@ -1,0 +1,66 @@
+<h1>Edit Group</h1>
+
+<form id="groupForm" action="/group/<%= group._id %>?_method=PUT" method="POST">
+    <input type="text" name="name" placeholder="Group Name" value="<%= group.name %>" required />
+
+    <h2>Members</h2>
+    <input type="text" id="memberInput" placeholder="Enter member name" />
+    <button type="button" id="addBtn">Add Member</button>
+
+    <ul id="memberList"></ul>
+
+    <!-- Hidden inputs for each member will be added here -->
+    <div id="hiddenMembers"></div>
+
+    <button type="submit">Update Group</button>
+</form>
+
+<script>
+    const members = <%= JSON.stringify(group.members.map(m => m.name)) %>;
+
+    const memberInput = document.getElementById('memberInput');
+    const addBtn = document.getElementById('addBtn');
+    const memberList = document.getElementById('memberList');
+    const hiddenMembers = document.getElementById('hiddenMembers');
+    const form = document.getElementById('groupForm');
+
+    addBtn.addEventListener('click', () => {
+        const name = memberInput.value.trim();
+        if (name && !members.includes(name)) {
+            members.push(name);
+            memberInput.value = "";
+            updateList();
+        }
+    });
+
+    function updateList() {
+        // Update the visible list
+        memberList.innerHTML = "";
+        members.forEach((member, index) => {
+            const li = document.createElement('li');
+            li.textContent = member + " ";
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = () => {
+                members.splice(index, 1);
+                updateList();
+            };
+            li.appendChild(removeBtn);
+            memberList.appendChild(li);
+        });
+
+        // Update hidden inputs
+        hiddenMembers.innerHTML = "";
+        members.forEach(member => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'members[]';
+            input.value = member;
+            hiddenMembers.appendChild(input);
+        });
+    }
+
+    updateList(); // initialize on page load
+</script>
